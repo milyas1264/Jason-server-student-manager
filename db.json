@@ -11,14 +11,9 @@
       "marks": 85
     },
     {
-      "name": "Ahmad",
+      "name": "Ahmad Bhai",
       "marks": 85,
       "id": "105f"
-    },
-    {
-      "id": "b455",
-      "name": "gsgs",
-      "marks": 444
     },
     {
       "id": "e83c",
@@ -34,6 +29,11 @@
       "id": "a08d",
       "name": "Hina",
       "marks": 78
+    },
+    {
+      "id": "9df5",
+      "name": "ilyas",
+      "marks": 60
     }
   ]
 }
