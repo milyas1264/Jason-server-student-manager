@@ -1,16 +1,28 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import db from "../db.json";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "/api",
 });
+
+const STORAGE_KEY = "student-manager-students";
+
+const getLocalStudents = () => {
+  const savedStudents = localStorage.getItem(STORAGE_KEY);
+  return savedStudents ? JSON.parse(savedStudents) : db.students;
+};
+
+const saveLocalStudents = (students) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(students));
+};
 
 function App() {
   const [students, setStudents] = useState([]);
   const [name, setName] = useState("");
   const [marks, setMarks] = useState("");
   const [editId, setEditId] = useState(null);
-  const [error, setError] = useState("");
+  const [usesLocalData, setUsesLocalData] = useState(false);
 
   useEffect(() => {
     loadStudents();
@@ -20,9 +32,10 @@ function App() {
     try {
       const res = await api.get("/students");
       setStudents(res.data);
-      setError("");
+      setUsesLocalData(false);
     } catch {
-      setError("Student data server is not running. Start it with npm run api.");
+      setStudents(getLocalStudents());
+      setUsesLocalData(true);
     }
   };
 
@@ -35,17 +48,32 @@ function App() {
   const addStudent = async () => {
     if (!name.trim() || !marks) return alert("Name aur marks likho!");
 
-    await api.post("/students", {
+    const student = {
+      id: crypto.randomUUID?.() || String(Date.now()),
       name: name.trim(),
       marks: Number(marks),
-    });
+    };
+
+    if (usesLocalData) {
+      const nextStudents = [...students, student];
+      saveLocalStudents(nextStudents);
+      setStudents(nextStudents);
+    } else {
+      await api.post("/students", student);
+      loadStudents();
+    }
     resetForm();
-    loadStudents();
   };
 
   const deleteStudent = async (id) => {
-    await api.delete(`/students/${id}`);
-    loadStudents();
+    if (usesLocalData) {
+      const nextStudents = students.filter((student) => student.id !== id);
+      saveLocalStudents(nextStudents);
+      setStudents(nextStudents);
+    } else {
+      await api.delete(`/students/${id}`);
+      loadStudents();
+    }
   };
 
   const startEdit = (student) => {
@@ -57,12 +85,23 @@ function App() {
   const updateStudent = async () => {
     if (!name.trim() || !marks) return alert("Name aur marks likho!");
 
-    await api.put(`/students/${editId}`, {
+    const updatedStudent = {
+      id: editId,
       name: name.trim(),
       marks: Number(marks),
-    });
+    };
+
+    if (usesLocalData) {
+      const nextStudents = students.map((student) =>
+        student.id === editId ? updatedStudent : student
+      );
+      saveLocalStudents(nextStudents);
+      setStudents(nextStudents);
+    } else {
+      await api.put(`/students/${editId}`, updatedStudent);
+      loadStudents();
+    }
     resetForm();
-    loadStudents();
   };
 
   return (
@@ -94,9 +133,9 @@ function App() {
         </button>
       </div>
 
-      {error && (
-        <p className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 w-full max-w-xl">
-          {error}
+      {usesLocalData && (
+        <p className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg mb-6 w-full max-w-xl">
+          Browser data mode is active. Changes are saved on this device.
         </p>
       )}
 
