@@ -4,8 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "vite --host 127.0.0.1 --port 5173 --configLoader native",
+    "api": "node scripts/api-server.mjs",
+    "build": "vite build --configLoader native",
     "preview": "vite preview",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
